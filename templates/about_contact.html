@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="About Washim Shaikh – Aspiring Software Engineer specialising in AI/ML, Full Stack Development, and intelligent real-world systems. Get in touch for collaborations or opportunities." />
+  <title>About & Contact – ChurnIQ</title>
+
+  <!-- Shared fonts (same as rest of site) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
+
+  <!-- Site stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+
+  <style>
+    /* ─── TOKEN OVERRIDES (match site palette) ─────────────────── */
+    :root {
+      --teal:       #0F766E;
+      --teal-light: #0D9488;
+      --teal-bg:    #F0FDFA;
+      --bg:         #F8FAF9;
+      --card:       #FFFFFF;
+      --text:       #1F2937;
+      --muted:      #6B7280;
+      --border:     #E5E7EB;
+      --shadow-sm:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md:  0 4px 20px rgba(15,118,110,.08), 0 1px 4px rgba(0,0,0,.06);
+      --shadow-lg:  0 12px 40px rgba(15,118,110,.12), 0 2px 8px rgba(0,0,0,.06);
+      --radius:     14px;
+      --transition: .25s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ─── SCROLL ANIMATIONS ────────────────────────────────────── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity .65s cubic-bezier(.4,0,.2,1),
+                  transform .65s cubic-bezier(.4,0,.2,1);
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── PAGE WRAPPER ─────────────────────────────────────────── */
+    .ac-page {
+      background: var(--bg);
+      min-height: 100vh;
+    }
+
+    /* ─── SECTION SHARED ───────────────────────────────────────── */
+    .ac-section {
+      padding: 80px 0;
+    }
+
+    .ac-container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .section-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .7rem;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--teal);
+      background: var(--teal-bg);
+      padding: 5px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(15,118,110,.22);
+      margin-bottom: 18px;
+    }
+    .section-pill svg { width: 8px; height: 8px; fill: var(--teal); }
+
+    .ac-title {
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(1.9rem, 5vw, 2.6rem);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.18;
+      margin-bottom: 40px;
+    }
+    .ac-title span { color: var(--teal); }
+
+    /* ══════════════════════════════════════════════════════
+       ABOUT SECTION
+    ══════════════════════════════════════════════════════ */
+    #about-section {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .about-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 44px 48px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Teal left accent stripe */
+    .about-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px; height: 100%;
+      background: linear-gradient(180deg, var(--teal), var(--teal-light));
+      border-radius: 4px 0 0 4px;
+    }
+
+    .about-card p {
+      font-size: 1.04rem;
+      color: #374151;
+      margin-bottom: 20px;
+      line-height: 1.82;
+    }
+    .about-card p:last-of-type { margin-bottom: 0; }
+    .about-card strong { color: var(--teal); font-weight: 600; }
+
+    /* Skill tags */
+    .skill-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 28px;
+    }
+    .tag {
+      font-size: .78rem;
+      font-weight: 500;
+      color: var(--teal);
+      background: var(--teal-bg);
+      border: 1px solid rgba(15,118,110,.22);
+      padding: 5px 14px;
+      border-radius: 999px;
+      transition: background var(--transition), transform var(--transition);
+    }
+    .tag:hover {
+      background: #CCFBF1;
+      transform: translateY(-1px);
+    }
+
+    /* ══════════════════════════════════════════════════════
+       CONTACT SECTION
+    ══════════════════════════════════════════════════════ */
+    #contact-section {
+      background: var(--card);
+    }
+
+    .contact-intro {
+      font-size: 1.03rem;
+      color: var(--muted);
+      max-width: 510px;
+      margin-bottom: 40px;
+      line-height: 1.8;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    .contact-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+    }
+    .contact-card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-3px);
+      border-color: rgba(15,118,110,.3);
+    }
+
+    .cc-icon {
+      width: 34px; height: 34px;
+      background: var(--teal-bg);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 2px;
+    }
+    .cc-icon svg {
+      width: 17px; height: 17px;
+      stroke: var(--teal); fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    .cc-label {
+      font-size: .69rem;
+      font-weight: 600;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .contact-card a {
+      font-size: .92rem;
+      font-weight: 500;
+      color: var(--text);
+      text-decoration: none;
+      word-break: break-all;
+      transition: color var(--transition);
+    }
+    .contact-card a:hover { color: var(--teal); }
+
+    /* CTA buttons */
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .btn-teal {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--teal);
+      color: #fff;
+      font-size: .88rem; font-weight: 600;
+      padding: 11px 24px;
+      border-radius: 10px;
+      text-decoration: none;
+      border: none; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(15,118,110,.28);
+      transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+    }
+    .btn-teal:hover {
+      background: var(--teal-light);
+      box-shadow: 0 6px 20px rgba(15,118,110,.38);
+      transform: translateY(-2px);
+    }
+
+    .btn-outline-teal {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent;
+      color: var(--teal);
+      font-size: .88rem; font-weight: 600;
+      padding: 11px 24px;
+      border-radius: 10px;
+      text-decoration: none;
+      border: 1.5px solid var(--teal);
+      transition: background var(--transition), transform var(--transition);
+    }
+    .btn-outline-teal:hover {
+      background: var(--teal-bg);
+      transform: translateY(-2px);
+    }
+
+    /* ─── RESPONSIVE ───────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .ac-section { padding: 56px 0; }
+      .about-card { padding: 28px 20px; }
+      .cta-row { flex-direction: column; }
+    }
+  </style>
+</head>
+
+<body class="ac-page">
+
+<!-- ── Navigation (matches site navbar) ─────────────────────────────────────── -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">
+      <span class="brand-icon">⚡</span>
+      ChurnIQ
+    </a>
+    <ul class="nav-links">
+      <li><a href="/" class="nav-link">Home</a></li>
+      <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+      <li><a href="/diagrams" class="nav-link">Diagrams</a></li>
+      <li>
+        <a href="/about" class="nav-link active nav-link-icon" title="About &amp; Contact">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          About
+        </a>
+      </li>
+      <li>
+        <a href="/about#contact-section" class="nav-link nav-link-icon" title="Contact Me">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align:-2px;margin-right:4px"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+          Contact
+        </a>
+      </li>
+      <li><a href="/predict" class="nav-btn">Predict Churn →</a></li>
+    </ul>
+  </div>
+</nav>
+
+
+<!-- ══════════════════════════════════════════════════════
+     ABOUT SECTION
+══════════════════════════════════════════════════════ -->
+<section class="ac-section" id="about-section">
+  <div class="ac-container">
+
+    <div class="fade-up">
+      <span class="section-pill">
+        <svg viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>
+        About Me
+      </span>
+      <h1 class="ac-title">Building things that<br /><span>actually matter</span></h1>
+    </div>
+
+    <div class="about-card fade-up">
+
+      <p>
+        I'm <strong>Washim Shaikh</strong>, a Computer Science Engineering student with a habit of turning ideas into working systems. Over the past couple of years, I've worked across the full stack — from designing backend logic in Python and Django to crafting clean, responsive frontends — while spending a serious chunk of my time exploring how machine learning can solve real problems in agriculture, finance, and everyday life.
+      </p>
+
+      <p>
+        My projects aren't experiments that live in notebooks. <strong>AgriTrade</strong>, my major project, connects farmers directly with buyers through an e-auction platform — removing middlemen and giving farmers better control over pricing. I've also built a <strong>fraud detection system</strong> tailored for Indian transaction patterns, a <strong>face recognition attendance system</strong>, deep learning models for medical imaging tasks like brain tumor classification and driver drowsiness detection, and a <strong>personal finance tracker (FinTrackAI)</strong>. Each of these came from a simple question: what would actually help someone here?
+      </p>
+
+      <p>
+        Through internships at <strong>Coincent</strong> (AI with Python), <strong>Yhills</strong> (Machine Learning), <strong>1Stop</strong> (Full Stack Development), and currently <strong>iStudio</strong> (AWS — ongoing), I've learned one thing clearly — the gap between knowing a technology and using it well is closed through building. That's what I keep doing. If a problem is interesting and the solution could be meaningful, I'm already thinking about the architecture.
+      </p>
+
+      <!-- Skill Tags -->
+      <div class="skill-tags">
+        <span class="tag">Python</span>
+        <span class="tag">Java</span>
+        <span class="tag">Django</span>
+        <span class="tag">Machine Learning</span>
+        <span class="tag">Deep Learning</span>
+        <span class="tag">Full Stack</span>
+        <span class="tag">HTML / CSS / JS</span>
+        <span class="tag">MySQL</span>
+        <span class="tag">Git &amp; GitHub</span>
+        <span class="tag">AWS</span>
+        <span class="tag">LLMs &amp; Prompt Engineering</span>
+        <span class="tag">Data Analysis</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════
+     CONTACT SECTION
+══════════════════════════════════════════════════════ -->
+<section class="ac-section" id="contact-section">
+  <div class="ac-container">
+
+    <div class="fade-up">
+      <span class="section-pill">
+        <svg viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>
+        Contact
+      </span>
+      <h2 class="ac-title">Let's Build Something<br /><span>Worth Building</span></h2>
+      <p class="contact-intro">
+        Whether you have a project in mind, an opportunity to share, or just want to talk tech — my inbox is open. I'm particularly interested in roles and collaborations in AI/ML, full stack development, and anything with real-world impact.
+      </p>
+    </div>
+
+    <!-- Contact Cards Grid -->
+    <div class="contact-grid">
+
+      <!-- Email -->
+      <div class="contact-card fade-up">
+        <div class="cc-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+        </div>
+        <span class="cc-label">Email</span>
+        <a href="mailto:washimshaikh33@gmail.com" id="email-link">washimshaikh33@gmail.com</a>
+      </div>
+
+      <!-- Phone -->
+      <div class="contact-card fade-up">
+        <div class="cc-icon">
+          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.1 1.2 2 2 0 012.11 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        </div>
+        <span class="cc-label">Phone</span>
+        <a href="tel:+918884958185" id="phone-link">+91 8884958185</a>
+      </div>
+
+      <!-- GitHub -->
+      <div class="contact-card fade-up">
+        <div class="cc-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
+        </div>
+        <span class="cc-label">GitHub</span>
+        <a href="https://github.com/Washim-8" target="_blank" rel="noopener" id="github-link">github.com/Washim-8</a>
+      </div>
+
+      <!-- LinkedIn -->
+      <div class="contact-card fade-up">
+        <div class="cc-icon">
+          <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+        </div>
+        <span class="cc-label">LinkedIn</span>
+        <a href="https://www.linkedin.com/in/washim-shaikh-349868281/" target="_blank" rel="noopener" id="linkedin-link">Washim Shaikh</a>
+      </div>
+
+    </div>
+
+    <!-- CTA Buttons -->
+    <div class="cta-row fade-up">
+      <a href="mailto:washimshaikh33@gmail.com" class="btn-teal" id="cta-email">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+        Send me an email
+      </a>
+      <a href="https://www.linkedin.com/in/washim-shaikh-349868281/" target="_blank" rel="noopener" class="btn-outline-teal" id="cta-linkedin">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+        Connect on LinkedIn
+      </a>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ── Footer (matches site footer) ─────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <span class="footer-brand">⚡ ChurnIQ</span>
+    <span class="footer-copy">Customer Churn Prediction System · Built with Python &amp; Flask</span>
+    <div class="footer-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/predict">Predict</a>
+      <a href="/diagrams">Diagrams</a>
+      <a href="/about">About Me</a>
+      <a href="/about#contact-section">Contact</a>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ── Scroll Fade-In Observer ───────────────────────────────────────────────── -->
+<script>
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    },
+    { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+  );
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  // Smooth-scroll to #contact-section if hash is present on load
+  if (window.location.hash === '#contact-section') {
+    const target = document.getElementById('contact-section');
+    if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth' }), 200);
+  }
+</script>
+
+</body>
+</html>

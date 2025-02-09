@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>System Diagrams – ChurnIQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand"><span class="brand-icon">⚡</span>ChurnIQ</a>
+    <ul class="nav-links">
+      <li><a href="/"          class="nav-link">Home</a></li>
+      <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+      <li><a href="/diagrams"  class="nav-link active">Diagrams</a></li>
+      <li><a href="/predict"   class="nav-btn">Predict Churn →</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="container">
+    <h1 class="page-title">System <span class="text-primary">Diagrams</span></h1>
+    <p class="page-sub">Architecture, data flow, and entity relationship diagrams</p>
+  </div>
+</div>
+
+<div class="container dashboard-page">
+  {% if not images %}
+  <div class="alert alert-warn">
+    ⚠️ &nbsp;Diagrams not found. Run <code>python dashboard/diagrams_generator.py</code> to generate them.
+  </div>
+  {% else %}
+  <div class="chart-grid">
+    {% for title, path in images.items() %}
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3>{{ title }}</h3>
+        <span class="chart-tag">Design</span>
+      </div>
+      <img src="{{ url_for('static', filename=path) }}"
+           alt="{{ title }}" class="chart-img" loading="lazy"/>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="result-actions" style="margin-top:2rem">
+    <a href="/dashboard" class="btn btn-primary">View Dashboard →</a>
+    <a href="/predict"   class="btn btn-ghost">Predict Churn</a>
+    <a href="/"          class="btn btn-ghost">Home</a>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <span class="footer-brand">⚡ ChurnIQ</span>
+    <span class="footer-copy">System Design Documentation</span>
+  </div>
+</footer>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

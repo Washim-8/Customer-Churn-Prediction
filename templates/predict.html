@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Predict Churn – ChurnIQ</title>
+  <meta name="description" content="Enter customer details to predict churn probability using AI."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand"><span class="brand-icon">⚡</span>ChurnIQ</a>
+    <ul class="nav-links">
+      <li><a href="/"          class="nav-link">Home</a></li>
+      <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+      <li><a href="/diagrams"  class="nav-link">Diagrams</a></li>
+      <li><a href="/predict"   class="nav-btn active">Predict Churn →</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="container">
+    <h1 class="page-title">Churn Prediction <span class="text-primary">Form</span></h1>
+    <p class="page-sub">Fill in customer details below and let the AI evaluate churn risk.</p>
+  </div>
+</div>
+
+{% if not model_ready %}
+<div class="container">
+  <div class="alert alert-warn">
+    ⚠️ &nbsp;Model not found. Please run <code>python src/model_training.py</code> first.
+  </div>
+</div>
+{% endif %}
+
+<div class="container form-page">
+  <form action="/predict" method="POST" id="churnForm">
+
+    <!-- ── Section 1: Demographics ─────────────────────────────────────────── -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <span class="form-card-icon">👤</span>
+        <h2>Customer Demographics</h2>
+      </div>
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="gender">Gender</label>
+          <select name="gender" id="gender" class="form-select">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="SeniorCitizen">Senior Citizen</label>
+          <select name="SeniorCitizen" id="SeniorCitizen" class="form-select">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="Partner">Has Partner</label>
+          <select name="Partner" id="Partner" class="form-select">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="Dependents">Has Dependents</label>
+          <select name="Dependents" id="Dependents" class="form-select">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="tenure">Tenure (months)
+            <span class="tooltip" data-tip="How long the customer has been with the company">ⓘ</span>
+          </label>
+          <input type="number" name="tenure" id="tenure" class="form-input"
+                 min="0" max="72" value="12" required/>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Section 2: Services ─────────────────────────────────────────────── -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <span class="form-card-icon">📡</span>
+        <h2>Services Subscribed</h2>
+      </div>
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="PhoneService">Phone Service</label>
+          <select name="PhoneService" id="PhoneService" class="form-select">
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="MultipleLines">Multiple Lines</label>
+          <select name="MultipleLines" id="MultipleLines" class="form-select">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+            <option value="No phone service">No Phone Service</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="InternetService">Internet Service</label>
+          <select name="InternetService" id="InternetService" class="form-select">
+            <option value="Fiber optic">Fiber Optic</option>
+            <option value="DSL">DSL</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="OnlineSecurity">Online Security</label>
+          <select name="OnlineSecurity" id="OnlineSecurity" class="form-select">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No Internet Service</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="OnlineBackup">Online Backup</label>
+          <select name="OnlineBackup" id="OnlineBackup" class="form-select">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No Internet Service</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="DeviceProtection">Device Protection</label>
+          <select name="DeviceProtection" id="DeviceProtection" class="form-select">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No Internet Service</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="TechSupport">Tech Support</label>
+          <select name="TechSupport" id="TechSupport" class="form-select">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No Internet Service</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="StreamingTV">Streaming TV</label>
+          <select name="StreamingTV" id="StreamingTV" class="form-select">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No Internet Service</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="StreamingMovies">Streaming Movies</label>
+          <select name="StreamingMovies" id="StreamingMovies" class="form-select">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No Internet Service</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Section 3: Account & Billing ──────────────────────────────────── -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <span class="form-card-icon">💳</span>
+        <h2>Account &amp; Billing</h2>
+      </div>
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="Contract">Contract Type</label>
+          <select name="Contract" id="Contract" class="form-select">
+            <option value="Month-to-month">Month-to-month</option>
+            <option value="One year">One Year</option>
+            <option value="Two year">Two Year</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="PaperlessBilling">Paperless Billing</label>
+          <select name="PaperlessBilling" id="PaperlessBilling" class="form-select">
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="PaymentMethod">Payment Method</label>
+          <select name="PaymentMethod" id="PaymentMethod" class="form-select">
+            <option value="Electronic check">Electronic Check</option>
+            <option value="Mailed check">Mailed Check</option>
+            <option value="Bank transfer (automatic)">Bank Transfer (Auto)</option>
+            <option value="Credit card (automatic)">Credit Card (Auto)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="MonthlyCharges">Monthly Charges ($)
+            <span class="tooltip" data-tip="Current monthly bill">ⓘ</span>
+          </label>
+          <input type="number" name="MonthlyCharges" id="MonthlyCharges"
+                 class="form-input" min="0" max="500" step="0.01" value="65.00" required/>
+        </div>
+
+        <div class="form-group">
+          <label for="TotalCharges">Total Charges ($)
+            <span class="tooltip" data-tip="Lifetime cumulative charges">ⓘ</span>
+          </label>
+          <input type="number" name="TotalCharges" id="TotalCharges"
+                 class="form-input" min="0" step="0.01" value="780.00" required/>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Preview bar ─────────────────────────────────────────────────────── -->
+    <div class="preview-bar" id="previewBar">
+      <div class="preview-item">
+        <span class="preview-label">Tenure</span>
+        <span class="preview-val" id="prev-tenure">12 mo</span>
+      </div>
+      <div class="preview-item">
+        <span class="preview-label">Monthly</span>
+        <span class="preview-val" id="prev-monthly">$65</span>
+      </div>
+      <div class="preview-item">
+        <span class="preview-label">Contract</span>
+        <span class="preview-val" id="prev-contract">Month-to-month</span>
+      </div>
+      <div class="preview-item">
+        <span class="preview-label">Internet</span>
+        <span class="preview-val" id="prev-internet">Fiber optic</span>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+        <span id="btnText">🔮 Predict Churn</span>
+        <span id="btnLoader" style="display:none">⏳ Analysing…</span>
+      </button>
+      <button type="reset"  class="btn btn-ghost">Reset Form</button>
+    </div>
+
+  </form>
+</div>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <span class="footer-brand">⚡ ChurnIQ</span>
+    <span class="footer-copy">Customer Churn Prediction System</span>
+    <div class="footer-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/diagrams">Diagrams</a>
+    </div>
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
