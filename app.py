@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from src.prediction import predict_churn, load_model_payload
 
 app = Flask(__name__)
-app.secret_key = "churn_prediction_2024"
+app.secret_key = os.environ.get("SECRET_KEY", "churn_prediction_2024")
 
 # ─── Lazy model load on startup ───────────────────────────────────────────────
 
@@ -26,6 +26,14 @@ def _ensure_model():
     """Check that the trained model exists; return True/False."""
     from src.config import MODEL_PATH
     return os.path.exists(MODEL_PATH)
+
+
+# ─── Health Check ─────────────────────────────────────────────────────────────
+
+@app.route("/health", methods=["GET"])
+def health():
+    """Health check endpoint for Render monitoring."""
+    return jsonify({"status": "healthy"}), 200
 
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
@@ -185,10 +193,12 @@ def diagrams():
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() in ("true", "1")
     print("\n" + "=" * 55)
     print("  Customer Churn Prediction System")
-    print("  http://127.0.0.1:5000")
+    print(f"  Running on: http://0.0.0.0:{port}")
     print("=" * 55 + "\n")
     if not _ensure_model():
         print("⚠️  Model not found. Run: python src/model_training.py")
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=port, debug=debug)
