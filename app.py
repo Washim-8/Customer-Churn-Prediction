@@ -8,7 +8,10 @@ Runs on: http://127.0.0.1:5000
 import os
 import sys
 import json
+import threading
+import time
 import traceback
+import urllib.request
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -34,6 +37,42 @@ def _ensure_model():
 def health():
     """Health check endpoint for Render monitoring."""
     return jsonify({"status": "healthy"}), 200
+
+
+# ─── Keep-Alive Self-Ping (prevents Render free-tier sleep) ───────────────────
+
+def _keep_alive():
+    """
+    Daemon thread that pings this service's own /health endpoint every
+    10 minutes so Render's free-tier never idles the instance to sleep.
+
+    The public URL is read from the RENDER_EXTERNAL_URL environment variable
+    which Render injects automatically into every running service.
+    Only starts pinging once the server is ready (waits 30 s on first run).
+    """
+    render_url = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/")
+    if not render_url:
+        # Not running on Render (local dev) – skip silently.
+        return
+
+    ping_url = f"{render_url}/health"
+    print(f"[KeepAlive] Self-ping enabled → {ping_url} every 10 min")
+
+    # Wait 30 s on cold start to let Gunicorn fully initialise first.
+    time.sleep(30)
+
+    while True:
+        try:
+            with urllib.request.urlopen(ping_url, timeout=10) as resp:
+                print(f"[KeepAlive] Pinged {ping_url} → HTTP {resp.status}")
+        except Exception as exc:
+            print(f"[KeepAlive] Ping failed: {exc}")
+        time.sleep(600)  # 10 minutes
+
+
+# Start keep-alive thread at import time so it works under Gunicorn too.
+_t = threading.Thread(target=_keep_alive, name="keep-alive", daemon=True)
+_t.start()
 
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
