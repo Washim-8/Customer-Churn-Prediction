@@ -12,7 +12,9 @@ import threading
 import time
 import traceback
 import urllib.request
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from functools import lru_cache
+from flask import Flask, render_template, request, jsonify, redirect, url_for, make_response
+from flask_compress import Compress
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -21,21 +23,105 @@ from src.prediction import predict_churn, load_model_payload
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "churn_prediction_2024")
 
-# ─── Lazy model load on startup ───────────────────────────────────────────────
+# ─── Gzip / Brotli compression for all responses ──────────────────────────────
+app.config["COMPRESS_REGISTER"] = True
+app.config["COMPRESS_LEVEL"] = 6          # balanced speed vs ratio
+app.config["COMPRESS_MIN_SIZE"] = 500     # don't compress tiny responses
+Compress(app)
 
-MODEL_READY = False
+# ─── Model warm-up on startup (once, in main process) ─────────────────────────
+# Resolves MODEL_PATH once at import time — avoids repeated os.path.exists() calls.
+from src.config import MODEL_PATH
 
-def _ensure_model():
-    """Check that the trained model exists; return True/False."""
-    from src.config import MODEL_PATH
-    return os.path.exists(MODEL_PATH)
+_MODEL_EXISTS: bool = os.path.exists(MODEL_PATH)
+_MODEL_CACHE: dict | None = None          # populated on first prediction request
+
+
+def _ensure_model() -> bool:
+    """Check model existence using the module-level cached flag."""
+    return _MODEL_EXISTS
+
+
+def _get_model_payload() -> dict | None:
+    """Return the model payload, loading once and caching for the process lifetime."""
+    global _MODEL_CACHE
+    if _MODEL_CACHE is None and _MODEL_EXISTS:
+        try:
+            _MODEL_CACHE = load_model_payload()
+        except Exception as exc:
+            print(f"[Startup] Failed to load model: {exc}")
+    return _MODEL_CACHE
+
+
+# Pre-load model payload at import time so the first user request is instant.
+if _MODEL_EXISTS:
+    _get_model_payload()
+
+
+# ─── Dashboard / Diagrams image lists cached at startup ───────────────────────
+@lru_cache(maxsize=1)
+def _dashboard_images() -> dict:
+    """Resolve available dashboard images once; cached for process lifetime."""
+    candidates = {
+        "churn_distribution":  "images/churn_distribution.png",
+        "correlation_heatmap": "images/correlation_heatmap.png",
+        "churn_by_contract":   "images/churn_by_contract.png",
+        "churn_by_tenure":     "images/churn_by_tenure.png",
+        "churn_by_payment":    "images/churn_by_payment.png",
+        "monthly_charges":     "images/monthly_charges_dist.png",
+        "roc_curve":           "images/roc_curve.png",
+        "confusion_matrix":    "images/confusion_matrix.png",
+        "feature_importance":  "images/feature_importance.png",
+        "model_comparison":    "images/model_comparison.png",
+    }
+    static_dir = os.path.join(os.path.dirname(__file__), "static")
+    return {k: v for k, v in candidates.items()
+            if os.path.exists(os.path.join(static_dir, v))}
+
+
+@lru_cache(maxsize=1)
+def _diagram_images() -> dict:
+    """Copy diagram PNGs to static/images (once) and return available map."""
+    import shutil
+    candidates = {
+        "System Architecture": "images/system_architecture.png",
+        "DFD Level 0":         "images/dfd_level0.png",
+        "DFD Level 1":         "images/dfd_level1.png",
+        "ER Diagram":          "images/er_diagram.png",
+    }
+    fnames = {
+        "System Architecture": "system_architecture.png",
+        "DFD Level 0":         "dfd_level0.png",
+        "DFD Level 1":         "dfd_level1.png",
+        "ER Diagram":          "er_diagram.png",
+    }
+    diagrams_dir = os.path.join(os.path.dirname(__file__), "diagrams")
+    images_dir   = os.path.join(os.path.dirname(__file__), "static", "images")
+    for label, fname in fnames.items():
+        src = os.path.join(diagrams_dir, fname)
+        dst = os.path.join(images_dir, fname)
+        if os.path.exists(src) and not os.path.exists(dst):
+            shutil.copy2(src, dst)
+
+    static_dir = os.path.join(os.path.dirname(__file__), "static")
+    return {k: v for k, v in candidates.items()
+            if os.path.exists(os.path.join(static_dir, v))}
+
+
+# ─── Cache-Control helper ──────────────────────────────────────────────────────
+def _cached(response, seconds: int = 3600):
+    """Attach Cache-Control header to a Flask response."""
+    response.cache_control.max_age = seconds
+    response.cache_control.public  = True
+    return response
 
 
 # ─── Health Check ─────────────────────────────────────────────────────────────
 
 @app.route("/health", methods=["GET"])
+@app.route("/healthz", methods=["GET"])
 def health():
-    """Health check endpoint for Render monitoring."""
+    """Health check endpoint — handles both /health and /healthz (Render monitor)."""
     return jsonify({"status": "healthy"}), 200
 
 
@@ -82,40 +168,40 @@ def index():
     """Home / landing page."""
     model_ready = _ensure_model()
 
-    # Load evaluation results if available
-    metrics = None
+    metrics    = None
+    comparison = []
     if model_ready:
         try:
-            payload = load_model_payload()
-            metrics = {
+            payload    = _get_model_payload()
+            metrics    = {
                 "model_name": payload["model_name"],
                 "accuracy":   round(payload["metrics"].get("Accuracy", 0) * 100, 1),
                 "roc_auc":    round((payload["metrics"].get("ROC AUC") or 0) * 100, 1),
                 "f1":         round(payload["metrics"].get("F1 Score", 0) * 100, 1),
             }
-            # Build comparison table
             all_results = payload.get("all_results", [])
             comparison  = sorted(all_results,
                                  key=lambda r: r.get("ROC AUC") or 0,
                                  reverse=True)
         except Exception:
             comparison = []
-    else:
-        comparison = []
 
-    return render_template(
+    resp = make_response(render_template(
         "index.html",
         model_ready=model_ready,
         metrics=metrics,
         comparison=comparison,
-    )
+    ))
+    # Home page can be cached for 5 minutes (metrics don't change between deploys)
+    return _cached(resp, seconds=300)
 
 
 @app.route("/predict", methods=["GET"])
 def predict_page():
     """Prediction form page."""
     model_ready = _ensure_model()
-    return render_template("predict.html", model_ready=model_ready)
+    resp = make_response(render_template("predict.html", model_ready=model_ready))
+    return _cached(resp, seconds=600)
 
 
 @app.route("/predict", methods=["POST"])
@@ -176,63 +262,29 @@ def api_predict():
 @app.route("/dashboard")
 def dashboard():
     """EDA & visualisation dashboard."""
-    images = {
-        "churn_distribution":  "images/churn_distribution.png",
-        "correlation_heatmap": "images/correlation_heatmap.png",
-        "churn_by_contract":   "images/churn_by_contract.png",
-        "churn_by_tenure":     "images/churn_by_tenure.png",
-        "churn_by_payment":    "images/churn_by_payment.png",
-        "monthly_charges":     "images/monthly_charges_dist.png",
-        "roc_curve":           "images/roc_curve.png",
-        "confusion_matrix":    "images/confusion_matrix.png",
-        "feature_importance":  "images/feature_importance.png",
-        "model_comparison":    "images/model_comparison.png",
-    }
-    # Filter to existing images
-    static_dir = os.path.join(os.path.dirname(__file__), "static")
-    available  = {k: v for k, v in images.items()
-                  if os.path.exists(os.path.join(static_dir, v))}
-
-    return render_template("dashboard.html", images=available)
+    resp = make_response(render_template("dashboard.html", images=_dashboard_images()))
+    # Dashboard images are static between deployments — cache for 1 hour
+    return _cached(resp, seconds=3600)
 
 
 @app.route("/about")
 def about():
     """About & Contact page."""
-    return render_template("about_contact.html")
+    resp = make_response(render_template("about_contact.html"))
+    return _cached(resp, seconds=3600)
 
 
 @app.route("/diagrams")
 def diagrams():
     """System design diagrams page."""
-    diag_images = {
-        "System Architecture": "images/system_architecture.png",
-        "DFD Level 0":         "images/dfd_level0.png",
-        "DFD Level 1":         "images/dfd_level1.png",
-        "ER Diagram":          "images/er_diagram.png",
-    }
-    # Copy diagrams to static/images if not present
-    import shutil
-    diagrams_dir = os.path.join(os.path.dirname(__file__), "diagrams")
-    images_dir   = os.path.join(os.path.dirname(__file__), "static", "images")
-    for fname in ["system_architecture.png", "dfd_level0.png",
-                  "dfd_level1.png", "er_diagram.png"]:
-        src = os.path.join(diagrams_dir, fname)
-        dst = os.path.join(images_dir, fname)
-        if os.path.exists(src) and not os.path.exists(dst):
-            shutil.copy2(src, dst)
-
-    static_dir = os.path.join(os.path.dirname(__file__), "static")
-    available  = {k: v for k, v in diag_images.items()
-                  if os.path.exists(os.path.join(static_dir, v))}
-
-    return render_template("diagrams.html", images=available)
+    resp = make_response(render_template("diagrams.html", images=_diagram_images()))
+    return _cached(resp, seconds=3600)
 
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port  = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "false").lower() in ("true", "1")
     print("\n" + "=" * 55)
     print("  Customer Churn Prediction System")

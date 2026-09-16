@@ -4,11 +4,19 @@ services:
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
-    healthCheckPath: /health
+    # --preload: loads the app in the master process before forking workers.
+    #   - model is loaded ONCE and shared via copy-on-write → faster cold starts
+    #   - workers start instantly (model already in memory)
+    # --worker-class sync: best for CPU-bound ML inference on free tier
+    # --threads 2: handles concurrent health-check + user requests within each worker
+    # --timeout 120: allows longer ML inference without worker kill
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 2 --worker-class sync --preload --timeout 120
+    healthCheckPath: /healthz
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.14
+      - key: PORT
+        value: "10000"
       - key: SECRET_KEY
         generateValue: true
       - key: FLASK_DEBUG

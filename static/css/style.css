@@ -570,10 +570,14 @@ strong { font-weight: 600; }
   border-radius: var(--radius-lg); overflow: hidden;
   box-shadow: var(--shadow);
   transition: transform var(--transition), box-shadow var(--transition);
+  /* Skip rendering off-screen cards until near viewport */
+  content-visibility: auto;
+  contain-intrinsic-size: 0 400px;
 }
 .chart-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
+  will-change: transform;
 }
 .chart-card.span-2 { grid-column: span 2; }
 .chart-card-header {
